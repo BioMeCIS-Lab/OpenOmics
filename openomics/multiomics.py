@@ -1,7 +1,13 @@
 from typing import List, Dict, Union
 
 from openomics import backend as pd
-from .clinical import ClinicalData, HISTOLOGIC_SUBTYPE, PATHOLOGIC_STAGE, TUMOR_NORMAL, PREDICTED_SUBTYPE
+from .clinical import (
+    ClinicalData,
+    HISTOLOGIC_SUBTYPE,
+    PATHOLOGIC_STAGE,
+    TUMOR_NORMAL,
+    PREDICTED_SUBTYPE,
+)
 from .genomics import SomaticMutation, CopyNumberVariation, DNAMethylation
 from .imageomics import WholeSlideImage
 from .proteomics import Protein
@@ -21,7 +27,9 @@ class MultiOmics:
         # This is a data dictionary accessor to retrieve individual -omic data
         self.data = {}
 
-    def add_omic(self, omic_data: ExpressionData, initialize_annotations: bool = True):
+    def add_omic(self,
+                 omic_data: ExpressionData,
+                 initialize_annotations: bool = True):
         """Adds an omic object to the Multiomics such that the samples in omic
         matches the samples existing in the other omics.
 
@@ -41,12 +49,16 @@ class MultiOmics:
 
         # Initialize annotation
         if initialize_annotations:
-            omic_data.initialize_annotations(gene_list=None, index=omic_data.gene_index)
+            omic_data.initialize_annotations(gene_list=None,
+                                             index=omic_data.gene_index)
 
-        print(omic_data.name(),
-              self.data[omic_data.name()].shape if hasattr(self.data[omic_data.name()], 'shape') else ": None",
-              ", indexed by:", omic_data.annotations.index.name
-              )
+        print(
+            omic_data.name(),
+            self.data[omic_data.name()].shape if hasattr(
+                self.data[omic_data.name()], "shape") else ": None",
+            ", indexed by:",
+            omic_data.annotations.index.name,
+        )
 
     def add_clinical_data(self, clinical_data=None):
         """
@@ -106,7 +118,9 @@ class MultiOmics:
         elif item.lower() == "drugs":
             return self.clinical.drugs
         else:
-            raise Exception('String accessor must be one of {"MessengerRNA", "MicroRNA", "LncRNA", "Protein", etc.}')
+            raise Exception(
+                'String accessor must be one of {"MessengerRNA", "MicroRNA", "LncRNA", "Protein", etc.}'
+            )
 
     def remove_duplicate_genes(self):
         """Removes duplicate genes between any omics such that the gene index
@@ -115,8 +129,9 @@ class MultiOmics:
         for omic_A in self._omics:
             for omic_B in self._omics:
                 if omic_A != omic_B:
-                    self.__getattribute__(omic_A).drop_genes(set(self.__getattribute__(omic_A).get_genes_list()) & set(
-                        self.__getattribute__(omic_B).get_genes_list()))
+                    self.__getattribute__(omic_A).drop_genes(
+                        set(self.__getattribute__(omic_A).get_genes_list())
+                        & set(self.__getattribute__(omic_B).get_genes_list()))
 
     def build_samples(self, agg_by="union"):
         """Running this function will build a dataframe for all samples across
@@ -125,8 +140,11 @@ class MultiOmics:
         Args:
             agg_by (str): ["union", "intersection"]
         """
-        if len(self._omics) < 1:  # make sure at least one ExpressionData present
-            print("build_samples() does nothing. Must add at least one omic to this MultiOmics object.")
+        if len(self._omics
+               ) < 1:  # make sure at least one ExpressionData present
+            print(
+                "build_samples() does nothing. Must add at least one omic to this MultiOmics object."
+            )
 
         all_samples = pd.Index([])
         for omic in self._omics:
@@ -158,13 +176,21 @@ class MultiOmics:
         matched_samples = self.data[omics[0]].index.copy()
 
         for omic in omics:
-            matched_samples = matched_samples.join(self.data[omic].index, how="inner")
+            matched_samples = matched_samples.join(self.data[omic].index,
+                                                   how="inner")
 
         return matched_samples
 
-    def load_data(self, omics, target=['pathologic_stage'],
-                  pathologic_stages=None, histological_subtypes=None, predicted_subtypes=None, tumor_normal=None,
-                  samples_barcode=None):
+    def load_data(
+        self,
+        omics,
+        target=["pathologic_stage"],
+        pathologic_stages=None,
+        histological_subtypes=None,
+        predicted_subtypes=None,
+        tumor_normal=None,
+        samples_barcode=None,
+    ):
         # type: (Union[List[str], str], List[str], List[str], List[str], List[str], List[str], List[str]) -> (Dict[str, pd.DataFrame], pd.DataFrame)
         """
         Args:
@@ -189,7 +215,7 @@ class MultiOmics:
             (X, y): Returns X, a dictionary containing the multiomics data that
             have data
         """
-        if omics == 'all' or omics is None:
+        if omics == "all" or omics is None:
             omics = self._omics
 
         matched_samples = self.match_samples(omics)
@@ -197,7 +223,8 @@ class MultiOmics:
         if samples_barcode is not None:
             matched_samples = samples_barcode
 
-        if hasattr(self, "clinical") and isinstance(self.clinical, ClinicalData):
+        if hasattr(self, "clinical") and isinstance(self.clinical,
+                                                    ClinicalData):
             # Build targets clinical data
             y = self.get_patients_clinical(matched_samples)
 
@@ -221,7 +248,8 @@ class MultiOmics:
         # Build expression matrix for each omic, indexed by matched_samples
         X_multiomics = {}
         for omic in omics:
-            X_multiomics[omic] = self.data[omic].loc[matched_samples, self[omic].get_genes_list()]
+            X_multiomics[omic] = self.data[omic].loc[
+                matched_samples, self[omic].get_genes_list()]
 
         return X_multiomics, y
 
@@ -239,8 +267,11 @@ class MultiOmics:
 
     def print_sample_sizes(self):
         for omic in self.data:
-            print(omic, self.data[omic].shape if hasattr(self.data[omic],
-                                                                 'shape') else "Didn't import data")
+            print(
+                omic,
+                self.data[omic].shape
+                if hasattr(self.data[omic], "shape") else "Didn't import data",
+            )
 
     def add_subtypes_to_patients_clinical(self, dictionary):
         """This function adds a "predicted_subtype" field to the patients
@@ -259,4 +290,5 @@ class MultiOmics:
             dictionary: A dictionary mapping patient's barcode to a subtype
         """
         self.data["PATIENTS"] = self.data["PATIENTS"].assign(
-            predicted_subtype=self.data["PATIENTS"][self.clinical.patient_column].map(dictionary))
+            predicted_subtype=self.data["PATIENTS"][
+                self.clinical.patient_column].map(dictionary))
