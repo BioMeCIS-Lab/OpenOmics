@@ -24,7 +24,6 @@ def longest_common_prefix(strs):
     Args:
         strs:
     """
-
     def traverse_trie(dictionary, prefix):
         if len(prefix) > 100:
             return prefix
