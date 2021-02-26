@@ -23,7 +23,10 @@ from six import string_types
 from six.moves import intern
 
 
-def expand_attribute_strings(attribute_strings, quote_char='\"', nan_value=None, usecols=None):
+def expand_attribute_strings(attribute_strings,
+                             quote_char='"',
+                             nan_value=None,
+                             usecols=None):
     """The last column of GTF has a variable number of key value pairs of the
     format: "key1 value1; key2 value2;" Parse these into a dictionary mapping
     each key onto a list of values, where the value is None for any row where
@@ -86,7 +89,8 @@ def expand_attribute_strings(attribute_strings, quote_char='\"', nan_value=None,
                 extra_columns[column_name] = column
                 column_order.append(column_name)
 
-            value = value.replace(quote_char, "") if value.startswith(quote_char) else value
+            value = (value.replace(quote_char, "")
+                     if value.startswith(quote_char) else value)
 
             try:
                 value = value_interned_strings[value]
@@ -102,9 +106,8 @@ def expand_attribute_strings(attribute_strings, quote_char='\"', nan_value=None,
             else:
                 column[i] = "%s,%s" % (old_value, value)
 
-    return OrderedDict(
-        (column_name, extra_columns[column_name])
-        for column_name in column_order)
+    return OrderedDict((column_name, extra_columns[column_name])
+                       for column_name in column_order)
 
 
 REQUIRED_COLUMNS = [
@@ -123,8 +126,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def parse_gtf(filepath_or_buffer, chunksize=1024 * 1024, features=None,
-              intern_columns=["seqname", "source", "strand", "frame"], fix_quotes_columns=["attribute"]):
+def parse_gtf(
+    filepath_or_buffer,
+    chunksize=1024 * 1024,
+    features=None,
+    intern_columns=["seqname", "source", "strand", "frame"],
+    fix_quotes_columns=["attribute"],
+):
     """
     Args:
         filepath_or_buffer (str or buffer object):
@@ -179,7 +187,8 @@ def parse_gtf(filepath_or_buffer, chunksize=1024 * 1024, features=None,
             "seqname": str,
         },
         na_values=".",
-        converters={"frame": parse_frame})
+        converters={"frame": parse_frame},
+    )
 
     dataframes = []
     try:
@@ -197,7 +206,7 @@ def parse_gtf(filepath_or_buffer, chunksize=1024 * 1024, features=None,
                 # release 78 has mistakes such as:
                 #   gene_name = "PRAMEF6;" transcript_name = "PRAMEF6;-201"
                 df[fix_quotes_column] = [
-                    s.replace(';\"', '\"').replace(";-", "-")
+                    s.replace(';"', '"').replace(";-", "-")
                     for s in df[fix_quotes_column]
                 ]
             dataframes.append(df)
@@ -209,7 +218,11 @@ def parse_gtf(filepath_or_buffer, chunksize=1024 * 1024, features=None,
 
     return df
 
-def parse_gtf_dask(filepath_or_buffer, npartitions=None, compression=None, features=None):
+
+def parse_gtf_dask(filepath_or_buffer,
+                   npartitions=None,
+                   compression=None,
+                   features=None):
     """
     Args:
         filepath_or_buffer (str or buffer object):
@@ -244,7 +257,8 @@ def parse_gtf_dask(filepath_or_buffer, npartitions=None, compression=None, featu
     # (see more complete description in docstring at top of file)
 
     # Uses Dask
-    logging.debug("dask.datafame.read_table, file={}, compression={}".format(filepath_or_buffer, compression))
+    logging.debug("dask.datafame.read_table, file={}, compression={}".format(
+        filepath_or_buffer, compression))
     dataframe = dd.read_table(
         filepath_or_buffer,
         sep="\t",
@@ -265,13 +279,20 @@ def parse_gtf_dask(filepath_or_buffer, npartitions=None, compression=None, featu
             "seqname": str,
         },
         na_values=".",
-        converters={"frame": parse_frame})
+        converters={"frame": parse_frame},
+    )
 
     return dataframe
 
 
-def parse_gtf_and_expand_attributes(filepath_or_buffer, npartitions=None, compression=None, chunksize=1024 * 1024,
-                                    restrict_attribute_columns=None, features=None):
+def parse_gtf_and_expand_attributes(
+    filepath_or_buffer,
+    npartitions=None,
+    compression=None,
+    chunksize=1024 * 1024,
+    restrict_attribute_columns=None,
+    features=None,
+):
     """Parse lines into column->values dictionary and then expand the
     'attribute' column into multiple columns. This expansion happens by
     replacing strings of semi-colon separated key-value values in the
@@ -287,30 +308,46 @@ def parse_gtf_and_expand_attributes(filepath_or_buffer, npartitions=None, compre
         features (set or None): Ignore entries which don't correspond to one of the supplied features
     """
     if npartitions:
-        df = parse_gtf_dask(filepath_or_buffer, npartitions=npartitions, compression=compression, features=features)
+        df = parse_gtf_dask(
+            filepath_or_buffer,
+            npartitions=npartitions,
+            compression=compression,
+            features=features,
+        )
         df = df.reset_index(drop=False)
         df = df.set_index("index")
 
         attribute_values = df.pop("attribute")
 
-        for column_name, values in expand_attribute_strings(attribute_values,
-                                                            usecols=restrict_attribute_columns).items():
+        for column_name, values in expand_attribute_strings(
+                attribute_values, usecols=restrict_attribute_columns).items():
             series = dd.from_array(np.array(values, dtype=np.str))
             df[column_name] = series
     else:
-        df = parse_gtf(filepath_or_buffer, chunksize=chunksize, features=features)
+        df = parse_gtf(filepath_or_buffer,
+                       chunksize=chunksize,
+                       features=features)
 
         attribute_values = df.pop("attribute")
 
-        for column_name, values in expand_attribute_strings(attribute_values,
-                                                            usecols=restrict_attribute_columns).items():
+        for column_name, values in expand_attribute_strings(
+                attribute_values, usecols=restrict_attribute_columns).items():
             df[column_name] = values
 
     return df
 
 
-def read_gtf(filepath_or_buffer, npartitions=None, compression=None, expand_attribute_column=True,
-             infer_biotype_column=False, column_converters={}, usecols=None, features=None, chunksize=1024 * 1024):
+def read_gtf(
+    filepath_or_buffer,
+    npartitions=None,
+    compression=None,
+    expand_attribute_column=True,
+    infer_biotype_column=False,
+    column_converters={},
+    usecols=None,
+    features=None,
+    chunksize=1024 * 1024,
+):
     """Parse a GTF into a dictionary mapping column names to sequences of
     values.
 
@@ -336,24 +373,33 @@ def read_gtf(filepath_or_buffer, npartitions=None, compression=None, expand_attr
             features in the supplied set
         chunksize (int):
     """
-    if isinstance(filepath_or_buffer, string_types) and not exists(filepath_or_buffer):
+    if isinstance(filepath_or_buffer,
+                  string_types) and not exists(filepath_or_buffer):
         raise ValueError("GTF file does not exist: %s" % filepath_or_buffer)
 
     if expand_attribute_column:
-        result_df = parse_gtf_and_expand_attributes(filepath_or_buffer, npartitions=npartitions, compression=compression,
-                                                    chunksize=chunksize,
-                                                    restrict_attribute_columns=usecols)
+        result_df = parse_gtf_and_expand_attributes(
+            filepath_or_buffer,
+            npartitions=npartitions,
+            compression=compression,
+            chunksize=chunksize,
+            restrict_attribute_columns=usecols,
+        )
     else:
         if npartitions:
             result_df = parse_gtf(filepath_or_buffer, features=features)
         else:
-            result_df = parse_gtf_dask(filepath_or_buffer, npartitions=npartitions, features=features, compression=compression)
+            result_df = parse_gtf_dask(
+                filepath_or_buffer,
+                npartitions=npartitions,
+                features=features,
+                compression=compression,
+            )
 
     for column_name, column_type in list(column_converters.items()):
         result_df[column_name] = [
             column_type(string_value) if len(string_value) > 0 else None
-            for string_value
-            in result_df[column_name]
+            for string_value in result_df[column_name]
         ]
 
     # Hackishly infer whether the values in the 'source' column of this GTF
@@ -368,10 +414,13 @@ def read_gtf(filepath_or_buffer, npartitions=None, compression=None, expand_attr
             # the 2nd column is the transcript_biotype (otherwise, it's the
             # gene_biotype)
             if "gene_biotype" not in column_names:
-                logging.info("Using column 'source' to replace missing 'gene_biotype'")
+                logging.info(
+                    "Using column 'source' to replace missing 'gene_biotype'")
                 result_df["gene_biotype"] = result_df["source"]
             if "transcript_biotype" not in column_names:
-                logging.info("Using column 'source' to replace missing 'transcript_biotype'")
+                logging.info(
+                    "Using column 'source' to replace missing 'transcript_biotype'"
+                )
                 result_df["transcript_biotype"] = result_df["source"]
 
     if usecols is not None:

@@ -29,9 +29,13 @@ def get_pkg_data_filename(dataurl, file):
         dataurl, file = os.path.split(file)
         dataurl = dataurl + "/"
 
-    logging.info("Fetching file from: {}{}, saving to {}".format(dataurl, file, openomics.config['cache_dir']))
-    with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp("remote_timeout", 30):
-        return data.get_pkg_data_filename(file, package="openomics", show_progress=True)
+    logging.info("Fetching file from: {}{}, saving to {}".format(
+        dataurl, file, openomics.config["cache_dir"]))
+    with data.conf.set_temp("dataurl",
+                            dataurl), data.conf.set_temp("remote_timeout", 30):
+        return data.get_pkg_data_filename(file,
+                                          package="openomics",
+                                          show_progress=True)
 
 
 def read_db(path, table, index_col):
@@ -48,7 +52,10 @@ def read_db(path, table, index_col):
     uid, dt = list(table.columns)
     q = sa.select([dt.cast(sa.types.String)]).select_from(table)
 
-    daskDF = dd.read_sql_table(table, path, index_col=index_col, parse_dates={'datetime': '%Y-%m-%d %H:%M:%S'})
+    daskDF = dd.read_sql_table(table,
+                               path,
+                               index_col=index_col,
+                               parse_dates={"datetime": "%Y-%m-%d %H:%M:%S"})
     return daskDF
 
 
@@ -62,18 +69,19 @@ def mkdirs(outdir):
 
 
 def retry(num=5):
-    """"retry connection.
+    """ "retry connection.
 
-        define max tries num
-        if the backoff_factor is 0.1, then sleep() will sleep for
-        [0.1s, 0.2s, 0.4s, ...] between retries.
-        It will also force a retry if the status code returned is 500, 502, 503 or 504.
+    define max tries num
+    if the backoff_factor is 0.1, then sleep() will sleep for
+    [0.1s, 0.2s, 0.4s, ...] between retries.
+    It will also force a retry if the status code returned is 500, 502, 503 or 504.
 
     """
     s = requests.Session()
-    retries = Retry(total=num, backoff_factor=0.1,
+    retries = Retry(total=num,
+                    backoff_factor=0.1,
                     status_forcelist=[500, 502, 503, 504])
-    s.mount('http://', HTTPAdapter(max_retries=retries))
+    s.mount("http://", HTTPAdapter(max_retries=retries))
 
     return s
 
