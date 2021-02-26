@@ -5,7 +5,6 @@ import large_image
 import numpy as np
 from dask import delayed
 
-
 # import histomicstk as htk
 # import histomicstk.segmentation.positive_pixel_count as ppc
 
@@ -43,7 +42,8 @@ class WholeSlideImage:
             f:
             folder_path:
         """
-        wsi_preprocessed = f.create_dataset("wsi_preprocessed", (100,), dtype='i')
+        wsi_preprocessed = f.create_dataset("wsi_preprocessed", (100, ),
+                                            dtype="i")
         wsi_file = self.wsi_file_iterator(folder_path)
 
         i = 2
@@ -74,11 +74,11 @@ class WholeSlideImage:
                 yield file
 
         if not has_any_wsi:
-            raise Exception("Folder " + folder_path + " doesn't contain any WSI .svs files")
+            raise Exception("Folder " + folder_path +
+                            " doesn't contain any WSI .svs files")
 
 
-def slide_to_tile(slide_path, params=None, region=None,
-                  tile_grouping=256):
+def slide_to_tile(slide_path, params=None, region=None, tile_grouping=256):
     """Function to parallelize any function by tiling the slide. This routine
     can also create a label image.
 
@@ -106,14 +106,19 @@ def slide_to_tile(slide_path, params=None, region=None,
     print(ts.getMetadata())
     kwargs = dict(format=large_image.tilesource.TILE_FORMAT_NUMPY)
     if region is not None:
-        kwargs['region'] = region
+        kwargs["region"] = region
     else:
         results = []
-        total_tiles = ts.getSingleTile(**kwargs)['iterator_range']['position']
+        total_tiles = ts.getSingleTile(**kwargs)["iterator_range"]["position"]
         for position in range(0, total_tiles, tile_grouping):
-            results.append(delayed(_count_tiles)(
-                slide_path, params, kwargs, position,
-                min(tile_grouping, total_tiles - position)))
+            results.append(
+                delayed(_count_tiles)(
+                    slide_path,
+                    params,
+                    kwargs,
+                    position,
+                    min(tile_grouping, total_tiles - position),
+                ))
         results = delayed(_combine)(results).compute()
     return results
 
@@ -131,7 +136,7 @@ def _count_tiles(slide_path, params, kwargs, position, count):
 
     subtotal = np.array((0, 0))
     for pos in range(position, position + count):
-        tile = ts.getSingleTile(tile_position=pos, **kwargs)['tile']
+        tile = ts.getSingleTile(tile_position=pos, **kwargs)["tile"]
         subtotal = subtotal + np.array(tile.shape[0:2])
 
     return subtotal
@@ -146,6 +151,9 @@ def _combine(results):
     return total
 
 
-
-if __name__ == '__main__':
-    wsi = WholeSlideImage("LUAD", "/media/jonny_admin/540GB/Research/TCGA_LUAD-WSI/", force_preprocess=True)
+if __name__ == "__main__":
+    wsi = WholeSlideImage(
+        "LUAD",
+        "/media/jonny_admin/540GB/Research/TCGA_LUAD-WSI/",
+        force_preprocess=True,
+    )

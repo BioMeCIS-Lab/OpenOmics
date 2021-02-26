@@ -20,7 +20,8 @@ def generate_MiRTarBase():
     return MiRTarBase(
         path="/data/datasets/Bioinformatics_ExternalData/miRTarBase/",
         strip_mirna_name=True,
-        filters={"Species (Target Gene)": "Homo sapiens"})
+        filters={"Species (Target Gene)": "Homo sapiens"},
+    )
 
 
 # Test disabled since obtaining MiRTarBase via ftp is unreachable

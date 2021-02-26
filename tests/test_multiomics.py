@@ -104,7 +104,8 @@ def test_import_MessengerRNA_Dask(generate_TCGA_LUAD_MessengerRNA_dask):
     assert generate_TCGA_LUAD_MessengerRNA_dask.expressions is not None
 
 
-def test_import_expression_table_size(generate_TCGA_LUAD_MessengerRNA, generate_TCGA_clinical):
+def test_import_expression_table_size(generate_TCGA_LUAD_MessengerRNA,
+                                      generate_TCGA_clinical):
     """
     Args:
         generate_TCGA_LUAD_MessengerRNA:
