@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def concat_uniques(series: pd.Series):
-    """ An aggregation custom function to be applied to each column of a groupby
+    """An aggregation custom function to be applied to each column of a groupby
     Args:
         series (pd.Series):
     """
@@ -12,6 +12,7 @@ def concat_uniques(series: pd.Series):
         return "|".join(series_str.unique())
     else:
         return None
+
 
 def concat(series: pd.Series):
     """

@@ -68,8 +68,9 @@ class MultiOmics:
             omic_data.annotations.index.name,
         )
 
-    def add_clinical_data(self, clinical: openomics.clinical.ClinicalData, **kwargs):
-        """ Add a ClinicalData instance to the MultiOmics instance.
+    def add_clinical_data(self, clinical: openomics.clinical.ClinicalData,
+                          **kwargs):
+        """Add a ClinicalData instance to the MultiOmics instance.
 
         Args:
             clinical (openomics.clinical.ClinicalData):
@@ -300,5 +301,5 @@ class MultiOmics:
             dictionary: A dictionary mapping patient's index to a subtype
         """
         self.data["PATIENTS"] = self.data["PATIENTS"].assign(
-            subtypes=self.data["PATIENTS"][
-                self.clinical.patient_column].map(dictionary))
+            subtypes=self.data["PATIENTS"][self.clinical.patient_column].map(
+                dictionary))

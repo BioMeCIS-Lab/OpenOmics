@@ -10,6 +10,7 @@ from typing import Union
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
+
 # from Bio.UniProt import GOA
 from dask import delayed
 
@@ -20,16 +21,16 @@ from .utils import get_pkg_data_filename
 
 class Expression(object):
     """This class handles importing of any quantitative omics data that is
-        in a table format (e.g. csv, tsv, excel). Pandas will load the DataFrame
-        from file with the user-specified columns and genes column name, then
-        tranpose it such that the rows are samples and columns are
-        gene/transcript/peptides. The user will also specify the index argument,
-        which specifies if the genes are ensembl genes ID or gene name, or
-        transcripts id/names. The user should be careful about choosing the
-        right genes index which makes it easier to annotate functional,
-        sequence, and interaction data to it. The dataframe should only contain
-        numeric values besides the genes_col_name and the sample barcode id
-        indices.
+    in a table format (e.g. csv, tsv, excel). Pandas will load the DataFrame
+    from file with the user-specified columns and genes column name, then
+    tranpose it such that the rows are samples and columns are
+    gene/transcript/peptides. The user will also specify the index argument,
+    which specifies if the genes are ensembl genes ID or gene name, or
+    transcripts id/names. The user should be careful about choosing the
+    right genes index which makes it easier to annotate functional,
+    sequence, and interaction data to it. The dataframe should only contain
+    numeric values besides the genes_col_name and the sample barcode id
+    indices.
 
     """
     def __init__(
@@ -85,7 +86,13 @@ class Expression(object):
         self.gene_level = gene_level
         self.sample_level = sample_level
 
-        df = self.load_dataframe(data, transpose=transpose, usecols=usecols, gene_index=gene_index, dropna=dropna,)
+        df = self.load_dataframe(
+            data,
+            transpose=transpose,
+            usecols=usecols,
+            gene_index=gene_index,
+            dropna=dropna,
+        )
         self.expressions = self.preprocess_table(
             df,
             usecols=usecols,
@@ -114,8 +121,14 @@ class Expression(object):
     def gene_index(self):
         return self.expressions.columns.name
 
-    def load_dataframe(self, data: Union[str, pd.DataFrame, dd.DataFrame, io.StringIO], transpose: bool, usecols: str,
-                       gene_index: str, dropna: bool):
+    def load_dataframe(
+        self,
+        data: Union[str, pd.DataFrame, dd.DataFrame, io.StringIO],
+        transpose: bool,
+        usecols: str,
+        gene_index: str,
+        dropna: bool,
+    ):
         """Reading table data inputs to create a DataFrame.
 
         Args:
@@ -138,8 +151,13 @@ class Expression(object):
 
         elif isinstance(data, str) and "*" in data:
             # TODO implement handling for multiple file ByteIO
-            df = self.load_dataframe_glob(globstring=data, usecols=usecols, gene_index=gene_index, transpose=transpose,
-                                          dropna=dropna)
+            df = self.load_dataframe_glob(
+                globstring=data,
+                usecols=usecols,
+                gene_index=gene_index,
+                transpose=transpose,
+                dropna=dropna,
+            )
 
         elif isinstance(data, io.StringIO):
             # Needed since the file was previous read to extract columns information
@@ -151,7 +169,7 @@ class Expression(object):
 
         elif isinstance(data, str) and validators.url(data):
             dataurl, filename = os.path.split(data)
-            file = get_pkg_data_filename(dataurl+"/", filename)
+            file = get_pkg_data_filename(dataurl + "/", filename)
             df = pd.read_table(file)
 
         else:
@@ -159,7 +177,8 @@ class Expression(object):
 
         return df
 
-    def preprocess_table(self,
+    def preprocess_table(
+        self,
         df: Union[pd.DataFrame, dd.DataFrame],
         usecols: str = None,
         gene_index: str = None,
@@ -190,7 +209,7 @@ class Expression(object):
         if usecols is not None and isinstance(usecols, str):
             if gene_index not in usecols:
                 # include index column in the filter regex query
-                usecols = (usecols + "|" + gene_index)
+                usecols = usecols + "|" + gene_index
 
             if isinstance(df, pd.DataFrame):
                 df = df.filter(regex=usecols)
@@ -202,7 +221,7 @@ class Expression(object):
         elif usecols is not None and isinstance(usecols, list):
             if gene_index not in usecols:
                 usecols.append(gene_index)
-            df =  df[usecols]
+            df = df[usecols]
 
         # Drop duplicate sample names
         df = drop_duplicate_columns(df)
@@ -231,7 +250,14 @@ class Expression(object):
 
         return df
 
-    def load_dataframe_glob(self, globstring: str, usecols: str, gene_index: str, transpose: bool, dropna: bool):
+    def load_dataframe_glob(
+        self,
+        globstring: str,
+        usecols: str,
+        gene_index: str,
+        transpose: bool,
+        dropna: bool,
+    ):
         """
         Args:
             globstring (str):
@@ -241,8 +267,8 @@ class Expression(object):
         Returns:
             dd.DataFrame
         """
-        def convert_numerical_to_float(df:pd.DataFrame):
-            cols = df.columns[~df.dtypes.eq('object')]
+        def convert_numerical_to_float(df: pd.DataFrame):
+            cols = df.columns[~df.dtypes.eq("object")]
             df[cols] = df[cols].astype(float)
             return df
 
@@ -259,13 +285,16 @@ class Expression(object):
                 usecols,
                 gene_index,
                 transpose,
-                True, # sort_index
-                dropna)
+                True,
+                dropna  # sort_index
+            )
             lazy_dataframes.append(df)
 
         logging.info("Files matched: {}".format(filenames))
 
-        return dd.from_delayed(lazy_dataframes, divisions=None, verify_meta=True)
+        return dd.from_delayed(lazy_dataframes,
+                               divisions=None,
+                               verify_meta=True)
 
     def set_genes_index(self, index: str, old_index: str):
         """

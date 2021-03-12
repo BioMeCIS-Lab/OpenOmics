@@ -29,15 +29,27 @@ def get_node_colormap(node_label):
         node_labels = node_label
         sorted_node_labels = sorted(set(node_labels), reverse=True)
         colors = np.linspace(0, 1, len(sorted_node_labels))
-        node_colormap = {f: colors[sorted_node_labels.index(f)] for f in set(node_labels)}
-        node_colors = [node_colormap[n] if n in node_colormap.keys() else None for n in node_labels]
+        node_colormap = {
+            f: colors[sorted_node_labels.index(f)]
+            for f in set(node_labels)
+        }
+        node_colors = [
+            node_colormap[n] if n in node_colormap.keys() else None
+            for n in node_labels
+        ]
 
     elif node_label.dtype == "object":
         node_labels = node_label.str.split("|", expand=True)[0]
         sorted_node_labels = sorted(node_labels.unique(), reverse=True)
         colors = np.linspace(0, 1, len(sorted_node_labels))
-        node_colormap = {f: colors[sorted_node_labels.index(f)] for f in node_labels.unique()}
-        node_colors = [node_colormap[n] if n in node_colormap.keys() else None for n in node_labels]
+        node_colormap = {
+            f: colors[sorted_node_labels.index(f)]
+            for f in node_labels.unique()
+        }
+        node_colors = [
+            node_colormap[n] if n in node_colormap.keys() else None
+            for n in node_labels
+        ]
 
     elif node_label.dtype == "float":
         node_labels = node_label.values

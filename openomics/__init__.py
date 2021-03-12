@@ -8,13 +8,11 @@ import sys
 import astropy
 import dask.dataframe as dd
 import pandas as pd
-
 """Top-level package for openomics."""
 
 __author__ = """Nhat (Jonny) Tran"""
-__email__ = 'nhat.tran@mavs.uta.edu'
-__version__ = '0.8.5'
-
+__email__ = "nhat.tran@mavs.uta.edu"
+__version__ = "0.8.5"
 
 # Initialize configurations
 this = sys.modules[__name__]
@@ -36,19 +34,19 @@ if not os.path.exists(user_conf_path):
 
     if not os.path.isfile(user_conf_path):
         base_conf = {}
-        base_conf['cache_dir'] = astropy.config.get_cache_dir(this.__name__)
+        base_conf["cache_dir"] = astropy.config.get_cache_dir(this.__name__)
 
-        with open(user_conf_path, 'w', encoding='utf-8') as file:
+        with open(user_conf_path, "w", encoding="utf-8") as file:
             json.dump(base_conf, fp=file, indent=4)
 
 # Read configuration from ~/.openomics/conf.json
 if os.path.isfile(user_conf_path):
     try:
-        with open(user_conf_path, 'r', encoding='utf-8') as file:
+        with open(user_conf_path, "r", encoding="utf-8") as file:
             user_conf = json.load(fp=file)
 
         if user_conf:
-            for p in user_conf['database']:
+            for p in user_conf["database"]:
                 this.config.update(p)
     except Exception as e:
         logging.info("Could not import configurations from", user_conf_path)
@@ -57,22 +55,19 @@ if os.path.isfile(user_conf_path):
 from . import database, utils, transcriptomics, proteomics, clinical, multiomics
 
 from .transcriptomics import (
-    Expression, MessengerRNA, MicroRNA, LncRNA,
+    Expression,
+    MessengerRNA,
+    MicroRNA,
+    LncRNA,
 )
 
-from .genomics import (
-    SomaticMutation, DNAMethylation, CopyNumberVariation
-)
+from .genomics import SomaticMutation, DNAMethylation, CopyNumberVariation
 
-from .proteomics import (
-    Protein
-)
+from .proteomics import Protein
 
 from .clinical import ClinicalData
 
-from .multiomics import (
-    MultiOmics
-)
+from .multiomics import MultiOmics
 
 
 def set_backend(new: str = "pandas"):

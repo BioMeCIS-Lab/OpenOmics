@@ -28,7 +28,7 @@ class SequenceDatabase(Database):
         super(SequenceDatabase, self).__init__(**kwargs)
 
     @abstractmethod
-    def read_fasta(self, fasta_file:str, replace_U2T:bool, npartitions=None):
+    def read_fasta(self, fasta_file: str, replace_U2T: bool, npartitions=None):
         """Returns a pandas DataFrame containing the fasta sequence entries.
         With a column named 'sequence'.
 
@@ -41,7 +41,8 @@ class SequenceDatabase(Database):
         raise NotImplementedError
 
     @abstractmethod
-    def get_sequences(self, index:str, omic:str, agg_sequences:str, **kwargs):
+    def get_sequences(self, index: str, omic: str, agg_sequences: str,
+                      **kwargs):
         """Returns a dictionary where keys are 'index' and values are
         sequence(s).
 
@@ -56,7 +57,7 @@ class SequenceDatabase(Database):
         raise NotImplementedError
 
     @staticmethod
-    def get_aggregator(agg:Union[str, callable]=None):
+    def get_aggregator(agg: Union[str, callable] = None):
         """Returns a function used aggregate a list of sequences from a groupby
         on a given key.
 
@@ -246,9 +247,9 @@ class MirBase(SequenceDatabase):
         self,
         path="ftp://mirbase.org/pub/mirbase/CURRENT/",
         file_resources=None,
-        sequence:str="hairpin",
-        species:str="Homo sapiens",
-        species_id:str=9606,
+        sequence: str = "hairpin",
+        species: str = "Homo sapiens",
+        species_id: str = 9606,
         col_rename=None,
         npartitions=0,
         replace_U2T=True,

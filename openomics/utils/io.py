@@ -34,14 +34,19 @@ def get_pkg_data_filename(dataurl, file):
         dataurl = dataurl + "/"
 
     try:
-        logging.info("Fetching file from: {}{}, saving to {}".format(dataurl, file, openomics.config['cache_dir']))
+        logging.info("Fetching file from: {}{}, saving to {}".format(
+            dataurl, file, openomics.config["cache_dir"]))
 
-        with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp("remote_timeout", 30):
-            return data.get_pkg_data_filename(file, package="openomics.database", show_progress=True)
+        with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp(
+                "remote_timeout", 30):
+            return data.get_pkg_data_filename(file,
+                                              package="openomics.database",
+                                              show_progress=True)
 
     except (URLError, ValueError) as e:
-        raise Exception("Unable to download file at {}. Please try manually downloading the files. \n{}".format(
-            os.path.join(dataurl, file), e))
+        raise Exception(
+            "Unable to download file at {}. Please try manually downloading the files. \n{}"
+            .format(os.path.join(dataurl, file), e))
 
 
 def read_db(path, table, index_col):
@@ -64,7 +69,10 @@ def read_db(path, table, index_col):
     uid, dt = list(table.columns)
     q = sa.select([dt.cast(sa.types.String)]).select_from(table)
 
-    daskDF = dd.read_sql_table(table, path, index_col=index_col, parse_dates={'datetime': '%Y-%m-%d %H:%M:%S'})
+    daskDF = dd.read_sql_table(table,
+                               path,
+                               index_col=index_col,
+                               parse_dates={"datetime": "%Y-%m-%d %H:%M:%S"})
     return daskDF
 
 
@@ -93,9 +101,10 @@ def retry(num=5):
         num:
     """
     s = requests.Session()
-    retries = Retry(total=num, backoff_factor=0.1,
+    retries = Retry(total=num,
+                    backoff_factor=0.1,
                     status_forcelist=[500, 502, 503, 504])
-    s.mount('http://', HTTPAdapter(max_retries=retries))
+    s.mount("http://", HTTPAdapter(max_retries=retries))
 
     return s
 
