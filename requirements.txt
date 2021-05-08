@@ -27,3 +27,4 @@ rarfile
 filetype
 goatools
 obonet
+tensorflow
